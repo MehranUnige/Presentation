@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decision Fusion for Sahel Land Cover</title>
+<meta name="description" content="Interactive companion to the poster: a neural and probabilistic graphical approach to decision fusion for multitemporal land cover mapping in the Sahel (IEEE GRSS SYP Summit 2026).">
+<meta name="theme-color" content="#002677">
+<link rel="stylesheet" href="vendor/katex.min.css">
+<style>
+@font-face{font-family:"Fira Sans";font-weight:400;font-display:swap;src:url(fonts/FiraSans-Regular.woff2) format("woff2")}
+@font-face{font-family:"Fira Sans";font-weight:600;font-display:swap;src:url(fonts/FiraSans-SemiBold.woff2) format("woff2")}
+@font-face{font-family:"Fira Sans";font-weight:700;font-display:swap;src:url(fonts/FiraSans-Bold.woff2) format("woff2")}
+:root{--blue:#002677;--red:#C8102E;--yellow:#F4DA40;--cyan:#199BFC;--ink:#25282A;--grey:#D9D9D6;--paper:#F4F6FA;--muted:#5A6068;--card:#fff;--line:#DDE2EA}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font:400 1.0625rem/1.6 "Fira Sans",system-ui,Arial,sans-serif;color:var(--ink);background:var(--paper);-webkit-text-size-adjust:100%}
+h1,h2,h3{font-weight:700;line-height:1.15;margin:0}
+a{color:var(--blue)}
+:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+.wrap{width:min(1120px,100% - 2rem);margin-inline:auto}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#progress{position:fixed;inset:0 0 auto 0;height:4px;background:var(--red);transform:scaleX(0);transform-origin:left;z-index:30}
+nav{position:fixed;inset:0 0 auto 0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;color:#fff;background:#002677f2;backdrop-filter:blur(6px);font-size:.85rem}
+nav img{height:34px;display:block}
+nav span{display:flex;gap:.5rem}
+nav a{color:#fff;font-weight:600;text-decoration:none;border:1px solid #ffffff88;border-radius:99px;padding:.35rem .9rem}
+/* hero */
+header.hero{position:relative;min-height:100svh;display:grid;align-items:center;color:#fff;background:var(--blue);overflow:hidden;isolation:isolate}
+#field{position:absolute;inset:0;width:100%;height:100%;z-index:-2;opacity:.75}
+header.hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(100deg,#002677f0 25%,#00267799 70%,#00267744)}
+.hero .wrap{padding:6rem 0 5rem}
+.event{display:inline-block;font-weight:600;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;background:var(--yellow);color:var(--ink);padding:.3rem .8rem;border-radius:4px}
+.hero h1{font-size:clamp(2rem,5.2vw,3.9rem);margin:1.2rem 0 1.4rem;max-width:18em}
+.hero h1 .w{display:inline-block;overflow:hidden;vertical-align:bottom;padding-bottom:.08em}
+.hero h1 .w span{display:inline-block}
+.authors{font-weight:600;font-size:1.2rem;margin:0}
+.affil{margin:.2rem 0 0;color:#cfd8ee}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;margin-top:2.6rem}
+.kpi{border-top:3px solid var(--yellow);padding-top:.7rem}
+.kpi b{display:block;font-size:clamp(2.2rem,5vw,3.2rem);line-height:1}
+.kpi>span{display:block;color:#dbe3f5;font-size:.95rem;margin-top:.4rem}
+.hint{position:absolute;right:1rem;bottom:.8rem;font-size:.75rem;color:#cfd8ee;text-align:right}
+.hint b{display:block;color:#fff;font-weight:600}
+.cue{position:absolute;left:50%;bottom:1rem;width:2px;height:38px;background:#ffffff55;overflow:hidden}
+.cue::after{content:"";display:block;width:100%;height:50%;background:#fff;animation:cue 1.6s ease-in-out infinite}
+@keyframes cue{from{transform:translateY(-100%)}to{transform:translateY(200%)}}
+/* sections */
+section{padding:5rem 0}
+section.alt{background:#fff}
+.kicker{display:flex;align-items:center;gap:.7rem;font-weight:700;color:var(--red);font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem}
+.kicker::before{content:"";width:2.2rem;height:3px;background:var(--red)}
+h2{font-size:clamp(1.7rem,3.6vw,2.5rem);color:var(--blue);margin-bottom:1.2rem}
+.lead{max-width:46rem;color:#3b4046}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.2rem;margin-top:2rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1.3rem 1.4rem}
+.card h3{font-size:1.1rem;color:var(--blue);margin-bottom:.4rem}
+.card p{margin:0}
+/* pipeline */
+.flow{display:flex;align-items:center;gap:.4rem;margin:2.2rem 0;flex-wrap:nowrap}
+.node{flex:1 1 0;min-width:0;text-align:center;background:#fff;border:2px solid var(--line);border-radius:10px;padding:.8rem .5rem;font-weight:700;color:var(--blue);transition:.3s}
+.node em{display:block;font-style:normal;font-weight:400;font-size:.8rem;color:var(--muted)}
+.node.on{background:var(--blue);border-color:var(--blue);color:#fff;transform:translateY(-4px);box-shadow:0 8px 20px #00267744}
+.node.on em{color:#cfd8ee}
+.node.out{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
+.in{display:grid;gap:.4rem;flex:1 1 0}
+.in .node{padding:.45rem .4rem;font-size:.9rem}
+.arrow{flex:0 0 34px;height:2px;background:var(--grey);position:relative;overflow:hidden}
+.arrow i{position:absolute;top:-2px;left:0;width:8px;height:6px;border-radius:3px;background:var(--red);animation:travel 1.6s linear infinite}
+@keyframes travel{from{transform:translateX(-10px)}to{transform:translateX(36px)}}
+@keyframes travelv{from{transform:translateY(-10px)}to{transform:translateY(30px)}}
+.stage{display:grid;grid-template-columns:3.2rem minmax(0,1fr);gap:0 1rem;margin-bottom:1.6rem}
+.badge{width:3.2rem;height:3.2rem;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;font-size:1.3rem;display:grid;place-items:center}
+.stage h3{color:var(--blue);font-size:1.3rem;margin-bottom:.3rem}
+.stage p{margin:.2rem 0 .8rem;max-width:46rem}
+.eq{background:#fff;border:1px solid var(--line);border-radius:8px;padding:.5rem .8rem;margin:.5rem 0;overflow-x:auto}
+.eq .katex-display{margin:.5em 0}
+.demo{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:1.2rem;align-items:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:1rem 1.2rem;margin-top:.8rem}
+.demo svg{width:100%;height:auto;display:block}
+.demo small{display:block;color:var(--muted)}
+.demo input{width:100%;accent-color:var(--blue);min-height:44px}
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.6rem 0 0;padding:0;list-style:none}
+.chips li{background:#fff;border:1px solid var(--line);border-radius:99px;padding:.4rem 1rem;font-size:.95rem}
+.chips b{color:var(--blue)}
+/* charts */
+.chart{background:#fff;border:1px solid var(--line);border-radius:10px;padding:1.2rem 1.2rem .8rem}
+.legend{display:flex;gap:1.4rem;flex-wrap:wrap;font-size:.9rem;margin-bottom:.8rem}
+.legend span{display:inline-flex;align-items:center;gap:.45rem}
+.sw{width:22px;height:12px;border-radius:2px;display:inline-block}
+.sw.a,.bar.a i{background:repeating-linear-gradient(135deg,#8D9299 0 4px,#B9BEC4 4px 8px)}
+.sw.b,.bar.b i{background:var(--blue)}
+.row{display:grid;grid-template-columns:7.6rem minmax(0,1fr);align-items:center;gap:.7rem;padding:.35rem .3rem;width:100%;text-align:left;background:none;border:0;border-radius:8px;font:inherit;color:inherit}
+button.row{cursor:pointer}
+button.row:hover{background:var(--paper)}
+button.row[aria-pressed=true]{background:#E4EBF8;box-shadow:inset 3px 0 var(--blue)}
+.row .lab{font-weight:600;font-size:.92rem}
+.bar{position:relative;height:15px;margin:2px 0}
+.bar i{display:block;height:100%;width:calc(var(--v)*86%);border-radius:0 3px 3px 0;transform-origin:left}
+.bar b{position:absolute;top:50%;left:calc(var(--v)*86% + 6px);transform:translateY(-50%);font-size:.78rem;font-weight:600}
+.two{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:1.4rem;align-items:start}
+.stack{display:grid;gap:1.6rem;margin-top:1.6rem}
+.stack .chart{max-width:760px}
+.cms{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;max-width:940px}
+@media (min-width:1100px){.stack{grid-template-columns:minmax(0,5fr) minmax(0,6fr);align-items:start}.stack .chart{max-width:none}.cms{gap:.6rem}}
+.cms figure{margin:0;text-align:center}
+.cms img{width:100%;height:auto;border:1px solid var(--line);border-radius:6px;background:#fff}
+.cms figcaption{font-weight:600;font-size:.9rem;margin-bottom:.3rem}
+.note{color:var(--muted);font-size:.9rem;margin:.6rem 0 0}
+ul.tight{padding-left:1.2rem;margin:.8rem 0}
+ul.tight li{margin:.35rem 0}
+/* compare slider */
+.cmp{position:relative;aspect-ratio:1020/908;max-width:min(760px,max(320px,calc((100svh - 290px) * 1.1233)));margin:0 auto;border-radius:10px;overflow:hidden;border:1px solid var(--line);--p:50%;touch-action:pan-y;background:#fff}
+.cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-drag:none}
+.cmp .top{clip-path:inset(0 calc(100% - var(--p)) 0 0)}
+.cmp .handle{position:absolute;top:0;bottom:0;left:var(--p);width:3px;margin-left:-1.5px;background:#fff;box-shadow:0 0 0 1px #0006}
+.cmp .handle::after{content:"\2194";position:absolute;top:50%;left:50%;width:44px;height:44px;margin:-22px;border-radius:50%;background:#fff;color:var(--blue);display:grid;place-items:center;font-weight:700;box-shadow:0 2px 10px #0006}
+.cmp input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;margin:0}
+.cmp:focus-within .handle::after{outline:3px solid var(--cyan)}
+.maptag{position:absolute;top:.6rem;background:#002677e6;color:#fff;font-weight:600;font-size:.85rem;padding:.25rem .7rem;border-radius:99px;pointer-events:none}
+.maptag.l{left:.6rem}.maptag.r{right:.6rem;background:#25282Ae6}
+.lg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.4rem .8rem;max-width:760px;margin:1rem auto 0;padding:0;list-style:none;font-size:.9rem}
+.lg li{display:flex;align-items:center;gap:.5rem}
+.lg i{width:20px;height:14px;border:1px solid #0008;display:inline-block}
+/* QR */
+#share{background:var(--blue);color:#fff}
+#share h2{color:#fff}
+.sharegrid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2.4rem;align-items:center}
+.qrframe{position:relative;background:#fff;padding:18px;border-radius:12px;width:max-content;overflow:hidden}
+.qrframe canvas,.qrframe svg{display:block}
+.qrframe::before,.qrframe::after{content:"";position:absolute;width:28px;height:28px;border:4px solid var(--red)}
+.qrframe::before{top:6px;left:6px;border-right:0;border-bottom:0}
+.qrframe::after{bottom:6px;right:6px;border-left:0;border-top:0}
+.scan{position:absolute;left:10px;right:10px;top:18px;height:3px;background:var(--red);box-shadow:0 0 14px 4px #C8102Eaa;border-radius:2px}
+.url{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;word-break:break-all;background:#ffffff1c;padding:.5rem .7rem;border-radius:6px}
+.btns{display:flex;gap:.6rem;flex-wrap:wrap;margin:1rem 0}
+.btns button{font:inherit;font-weight:600;min-height:44px;padding:.4rem 1.2rem;border-radius:99px;border:2px solid #fff;background:none;color:#fff;cursor:pointer}
+.btns button:hover{background:#fff;color:var(--blue)}
+footer{background:#001a52;color:#cfd8ee;padding:2.5rem 0;font-size:.9rem}
+footer h3{color:#fff;font-size:1rem;margin:0 0 .5rem}
+footer .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem}
+footer ol{margin:0;padding-left:1.4rem}
+footer a{color:#fff}
+@media (max-width:820px){
+ section{padding:3.4rem 0}
+ .flow{flex-direction:column;align-items:stretch}
+ .arrow{flex:0 0 26px;width:2px;height:26px;margin-inline:auto}
+ .arrow i{top:0;left:-2px;width:6px;height:8px;animation-name:travelv}
+ .two,.sharegrid,.demo{grid-template-columns:minmax(0,1fr)}
+ .stage{grid-template-columns:2.4rem minmax(0,1fr)}.badge{width:2.4rem;height:2.4rem;font-size:1rem}
+ .row{grid-template-columns:6rem minmax(0,1fr)}
+ .hint{display:none}
+ .eq .katex{font-size:1em}
+ .eq .katex-html>.tag{position:static;margin-left:1.4em}
+}
+@media (prefers-reduced-motion:reduce){.arrow i,.cue::after{animation:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<nav aria-label="Top"><img src="assets/unige-logo-white.svg" alt="Università di Genova"><span><a href="./#video">Watch video</a> <a href="#share">Scan &amp; share</a></span></nav>
+
+<header class="hero">
+  <canvas id="field" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <span class="event">IEEE GRSS SYP Summit 2026 · Poster session</span>
+    <h1 id="title">A Neural and Probabilistic Graphical Approach to Decision Fusion for Multitemporal Land Cover Mapping in Sahel</h1>
+    <p class="authors">Mehran Shovkati, Priscilla Indira Osa, Gabriele Moser, Sebastiano B. Serpico</p>
+    <p class="affil">DITEN, University of Genoa, Via Opera Pia 11a, 16145 Genoa, Italy</p>
+    <div class="kpis">
+      <div class="kpi"><b><span data-count="92.83" data-dec="2">92.83</span>%</b><span>overall accuracy of the proposed multisensor fusion, 2019 (P1 product: 65.26%)</span></div>
+      <div class="kpi"><b>≥<span data-count="70">70</span>%</b><span>overall accuracy of the proposed HMM in every year, 1990–2019 (P1 cascade: 56–67%)</span></div>
+      <div class="kpi"><b><span data-count="7">7</span> years</b><span>mapped over a 110 km × 110 km Sahel tile (Sentinel-2 tile 36PVT)</span></div>
+    </div>
+  </div>
+  <div class="hint"><b id="hintState">Noisy per-pixel classification</b>Illustrative animation, not data</div>
+  <div class="cue" aria-hidden="true"></div>
+</header>
+
+<main>
+<section id="why"><div class="wrap">
+  <div class="kicker" data-reveal>1 · Motivation</div>
+  <h2 data-reveal>Why a new decision fusion chain?</h2>
+  <div class="cards">
+    <div class="card" data-reveal><h3>Why land cover?</h3><p>Land cover is an Essential Climate Variable. The African Sahel is heterogeneous and changes rapidly under climate change, so high-resolution maps are needed for resource management and climate-change mitigation.</p></div>
+    <div class="card" data-reveal><h3>The baseline</h3><p>ESA CCI+ High Resolution Land Cover maps land cover at 10–30 m every five years from 1990 [1]. Its Phase 1 (P1) decision fusion confuses spectrally similar classes, over-smooths small structures and links dates only pairwise.</p></div>
+    <div class="card" data-reveal><h3>Our goal</h3><p>One decision-level fusion chain for multisensor, multitemporal and spatial fusion, replacing the P1 chain. Inputs are yearly pixelwise posteriors from optical and SAR classifiers.</p></div>
+  </div>
+</div></section>
+
+<section id="method" class="alt"><div class="wrap">
+  <div class="kicker" data-reveal>2 · Framework</div>
+  <h2 data-reveal>Three modules, one chain</h2>
+  <div class="flow" role="img" aria-label="Processing chain: SAR and optical posteriors go to the PSMLP, then the HMM, then the CRF, producing land-cover maps">
+    <div class="in"><span class="node">SAR posteriors</span><span class="node">Optical posteriors</span></div>
+    <span class="arrow"><i></i></span>
+    <span class="node st" data-stage="1">PSMLP<em>multisensor</em></span>
+    <span class="arrow"><i></i></span>
+    <span class="node st" data-stage="2">HMM<em>temporal</em></span>
+    <span class="arrow"><i></i></span>
+    <span class="node st" data-stage="3">CRF<em>spatial</em></span>
+    <span class="arrow"><i></i></span>
+    <span class="node out">Land-cover maps</span>
+  </div>
+
+  <div class="stage" data-stage="1" data-reveal><div class="badge">1</div><div>
+    <h3>PSMLP: Pseudo-Siamese multilayer perceptron</h3>
+    <p>Two parallel MLP branches process the optical and SAR posteriors. Their outputs are concatenated, then a fusion layer and a softmax give the fused posterior (late fusion). A neural network can learn non-linear cross-modal dependencies.</p>
+    <div class="eq" data-tex="P_F(l_s=\omega_k \mid x_s)=\mathrm{softmax}\!\big(W^{\mathrm{fusion}}\big[z_s^{\mathrm{opt}};\,z_s^{\mathrm{sar}}\big]+b^{\mathrm{fusion}}\big)_k \tag{1}"></div>
+  </div></div>
+
+  <div class="stage" data-stage="2" data-reveal><div class="badge">2</div><div>
+    <h3>HMM: temporal consistency</h3>
+    <p>Forward–backward inference [2] over the whole time series gives temporally harmonized posteriors. α is the forward and β the backward probability, and class-transition probabilities link consecutive years.</p>
+    <div class="eq" data-tex="P(l_s^t \mid x_s^1,\ldots,x_s^T)=\dfrac{\alpha(l_s^t)\,\beta(l_s^t)}{\sum_{l_s^t}\alpha(l_s^t)\,\beta(l_s^t)} \tag{2}"></div>
+  </div></div>
+
+  <div class="stage" data-stage="3" data-reveal><div class="badge">3</div><div>
+    <h3>Contrast-sensitive CRF: spatial regularization</h3>
+    <p>The energy combines a unary term from the PSMLP output with a pairwise term over the four-connected neighbours [3, 4]. The RBF kernel <i>K</i> compares the posteriors of neighbouring pixels: near an edge it tends to 0, which reduces smoothing; in uniform areas it tends to 1, which promotes smoothness.</p>
+    <div class="eq" data-tex="U(L \mid X)=-\sum_{s\in\mathcal{S}}\alpha\log P_F(l_s \mid x_s)+\sum_{s\in\mathcal{S}}\sum_{r\in\partial s}V_{sr}(l_s,l_r \mid X) \tag{3}"></div>
+    <div class="eq" data-tex="V_{sr}(l_s,l_r \mid X)=\gamma\,\big[1-\delta(l_s,l_r)\big]\,\mathcal{K}\big(P_s,P_r\big),\qquad \mathcal{K}\big(P_s,P_r\big)=e^{-\varphi\,\|P_s-P_r\|^2} \tag{4}"></div>
+    <div class="demo">
+      <svg id="kplot" viewBox="0 0 320 200" role="img" aria-label="Plot of the kernel K as a function of the posterior contrast d"></svg>
+      <div><b>Try it: sensitivity φ</b><small>Illustrative curve of K = exp(−φ d²), with d = ‖P<sub>s</sub> − P<sub>r</sub>‖. Larger φ makes the CRF treat smaller differences as edges.</small>
+        <label for="phi">φ = <output id="phiOut">3.0</output></label>
+        <input id="phi" type="range" min="0.5" max="10" step="0.5" value="3"></div>
+    </div>
+  </div></div>
+</div></section>
+
+<section id="setup"><div class="wrap">
+  <div class="kicker" data-reveal>3 · Study area &amp; setup</div>
+  <h2 data-reveal>A challenging Sahel tile, 1990–2019</h2>
+  <p class="lead" data-reveal>Sentinel-2 tile 36PVT (110 km × 110 km). Multitemporal processing at 30 m: Sentinel-2/-1 for 2019, Landsat, ASAR, ERS-1 and ERS-2 for earlier years. Each module is compared with its P1 counterpart: consensus-theory fusion, spatial MRF and the Bayesian cascade.</p>
+  <ul class="chips" data-reveal>
+    <li><b>7</b> years: 1990, 1995, 2000, 2005, 2010, 2015, 2019</li><li>Split <b>70 / 10 / 20 %</b></li><li>SGD, lr <b>0.01</b>, momentum <b>0.9</b></li>
+    <li>Dropout <b>0.5</b></li><li>Weight decay <b>10⁻⁴</b></li><li><b>50</b> epochs, batch <b>64</b></li>
+  </ul>
+</div></section>
+
+<section id="fusion" class="alt"><div class="wrap">
+  <div class="kicker" data-reveal>4 · Result</div>
+  <h2 data-reveal>Multisensor fusion, 2019</h2>
+  <div class="two">
+    <div class="chart" id="f1chart" data-reveal></div>
+    <div data-reveal>
+      <p class="lead">Overall accuracy rises from <b>65.26 %</b> (P1) to <b>92.83 %</b> with the proposed fusion.</p>
+      <ul class="tight">
+        <li>Tree-Dec-Broad F1: 0.23 → <b>0.72</b></li><li>Bare: 0.25 → <b>0.92</b></li><li>Flood-Grass: 0.46 → <b>0.98</b></li>
+        <li>Built-up (1.00) and Water-Perm (0.90) are on par.</li>
+      </ul>
+      <p class="note">The network learns non-linear decision boundaries that overcome the spectral confusion of the P1 model, which relied on expert class weights.</p>
+    </div>
+  </div>
+</div></section>
+
+<section id="temporal"><div class="wrap">
+  <div class="kicker" data-reveal>5 · Result</div>
+  <h2 data-reveal>Temporal consistency, 1990–2019</h2>
+  <p class="lead" data-reveal>The P1 cascade works on pairs of dates; the HMM considers the entire timeline at once. Select a year to compare the confusion matrices.</p>
+  <div class="stack">
+    <div class="chart" id="oachart" data-reveal></div>
+    <div data-reveal>
+      <div class="cms" aria-live="polite">
+        <figure><figcaption>P1 cascade</figcaption><img id="cmP1" alt="" loading="lazy"></figure>
+        <figure><figcaption>Proposed HMM</figcaption><img id="cmHmm" alt="" loading="lazy"></figure>
+      </div>
+      <p class="note" id="cmNote"></p>
+    </div>
+  </div>
+</div></section>
+
+<section id="spatial" class="alt"><div class="wrap">
+  <div class="kicker" data-reveal>6 · Result</div>
+  <h2 data-reveal>Spatial regularization, tile 36PVT</h2>
+  <p class="lead" data-reveal>Drag the handle to compare the proposed CRF with the P1 MRF.</p>
+  <div class="cmp" id="cmp" data-reveal>
+    <img src="assets/map_mrf.png" alt="Land-cover map from the P1 MRF approach" width="1020" height="908">
+    <img class="top" src="assets/map_crf.png" alt="Land-cover map from the proposed CRF approach" width="1020" height="908">
+    <span class="maptag l">Proposed CRF</span><span class="maptag r">P1 MRF</span>
+    <div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed CRF map (left) or the P1 MRF map (right)">
+  </div>
+  <ul class="lg" id="legend" aria-label="Map legend"></ul>
+  <div class="cards">
+    <div class="card" data-reveal><h3>CRF keeps detail</h3><p>Small settlements, transitional vegetation between cropland and shrubland, and aquatic vegetation along river networks survive regularization.</p></div>
+    <div class="card" data-reveal><h3>MRF over-smooths</h3><p>The P1 product over-smooths the centre of the tile for both shrubland types and erodes narrow rivers and small settlements, more so at higher regularization weights.</p></div>
+  </div>
+</div></section>
+
+<section id="end"><div class="wrap">
+  <div class="kicker" data-reveal>7 · Conclusions</div>
+  <h2 data-reveal>What we learned, what comes next</h2>
+  <div class="cards">
+    <div class="card" data-reveal><h3>Result</h3><p>PSMLP + HMM + CRF outperforms the P1 chain on the same data and study area over a 30-year satellite image time series.</p></div>
+    <div class="card" data-reveal><h3>Limits</h3><p>Spectrally similar vegetation classes remain hard for both chains, and supervised fusion needs labelled training data, which can be scarce.</p></div>
+    <div class="card" data-reveal><h3>Next</h3><p>Other regions; GRU, LSTM and Transformer sequence models; multiresolution fusion at the native resolution of each source.</p></div>
+  </div>
+</div></section>
+
+<section id="share"><div class="wrap sharegrid">
+  <div class="qrframe" data-reveal><div id="qr"></div><div class="scan" aria-hidden="true"></div></div>
+  <div data-reveal>
+    <div class="kicker" style="color:var(--yellow)">Scan &amp; share</div>
+    <h2>Open this page on your phone</h2>
+    <p>Point your camera at the code to carry this interactive poster with you. Poster session: <b>Saturday 14 November 2026, 13:30–15:00</b>, Palazzo Pacanowski, Naples.</p>
+    <div class="url" id="urlText"></div>
+    <div class="btns"><button id="copy" type="button">Copy link</button><button id="share-btn" type="button" hidden>Share…</button></div>
+    <p>Contact: <a style="color:#fff" href="mailto:Mehran.Shovkati@edu.unige.it">Mehran.Shovkati@edu.unige.it</a></p>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap cols">
+  <div><h3>References</h3><ol>
+    <li>ESA Climate Change Initiative, High Resolution Land Cover, <a href="https://climate.esa.int/en/projects/high-resolution-land-cover/">climate.esa.int</a> (2024).</li>
+    <li>L. R. Rabiner, Proc. IEEE 77(2), 257–286 (1989), doi:10.1109/5.18626.</li>
+    <li>C. Sutton, A. McCallum, Found. Trends Mach. Learn. 4(4), 267–373 (2012).</li>
+    <li>M. Pastorino, G. Moser, S. B. Serpico, J. Zerubia, IEEE TGRS 62 (2024).</li></ol></div>
+  <div><h3>Acknowledgements</h3><p>Supported by the ESA CCI+ High Resolution Land Cover project. Thanks to P. Gamba and A. Sorriso (University of Pavia) for the despeckled Sentinel-1 images, and to L. Bruzzone and his team (University of Trento) for the Sentinel-2 images.</p>
+  <p>Figures and numbers come from the authors' SPIE manuscript. The hero animation is illustrative.</p></div>
+</div></footer>
+<noscript><p style="padding:1rem;background:#fff">This interactive page needs JavaScript for its charts and equations.</p></noscript>
+
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/ScrollTrigger.min.js"></script>
+<script src="vendor/katex.min.js"></script>
+<script src="vendor/qr-code-styling.js"></script>
+<script>
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+gsap.registerPlugin(ScrollTrigger);
+const motion = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- equations (LaTeX via KaTeX) ---------- */
+$$(".eq").forEach(el => katex.render(el.dataset.tex, el, { displayMode: true, throwOnError: false }));
+
+/* ---------- data from the SPIE paper ---------- */
+const YEARS = [1990, 1995, 2000, 2005, 2010, 2015, 2019];
+const OA_HMM = [0.76, 0.73, 0.70, 0.75, 0.73, 0.71, 0.89];
+const OA_P1 = [0.67, 0.60, 0.62, 0.58, 0.66, 0.56, 0.61];
+const CLASSES = ["Tree-Dec-Broad", "Shrub-Dec", "Grass", "Crops", "Flood-Grass", "Bare", "Built-up", "Water-Seas", "Water-Perm"];
+const F1_P1 = [0.23, 0.76, 0.73, 0.42, 0.46, 0.25, 1.00, 0.33, 0.90];
+const F1_NEW = [0.72, 0.96, 0.90, 0.86, 0.98, 0.92, 1.00, 0.75, 0.90];
+const LEGEND = [["Tree-Dec-Broad", "0,160,0"], ["Shrub-Dec", "170,115,0"], ["Grass", "255,180,50"], ["Crops", "255,255,100"], ["Flood-Grass", "0,220,130"],
+  ["Bare", "255,245,215"], ["Built-up", "195,20,0"], ["Water-Seas", "91,149,255"], ["Water-Perm", "0,70,200"]];
+
+/* ---------- bar charts (hatched grey = baseline, solid blue = proposed) ---------- */
+function bars(root, { labels, base, prop, names, ariaLabel, select }) {
+  const tag = select ? "button" : "div";
+  root.innerHTML = `<div class="legend"><span><i class="sw a"></i>${names[0]}</span><span><i class="sw b"></i>${names[1]}</span></div>
+    <div role="${select ? "group" : "img"}" aria-label="${ariaLabel}">` + labels.map((l, i) => `
+    <${tag} class="row" ${select ? `type="button" aria-pressed="false" data-i="${i}"` : ""}>
+      <span class="lab">${l}</span>
+      <span><span class="bar a" style="display:block;--v:${base[i]}"><i></i><b>${base[i].toFixed(2)}</b></span>
+      <span class="bar b" style="display:block;--v:${prop[i]}"><i></i><b>${prop[i].toFixed(2)}</b></span></span>
+    </${tag}>`).join("") + "</div>";
+  if (motion) ScrollTrigger.create({ trigger: root, start: "top 80%", once: true, onEnter: () => {
+    gsap.from($$(".bar i", root), { scaleX: 0, duration: 0.9, ease: "power3.out", stagger: 0.04 });
+    gsap.from($$(".bar b", root), { opacity: 0, duration: 0.5, delay: 0.5, stagger: 0.04 }); } });
+}
+bars($("#f1chart"), { labels: CLASSES, base: F1_P1, prop: F1_NEW, names: ["P1 fusion", "Proposed PSMLP"], ariaLabel: "F1-score per class in 2019, P1 fusion versus proposed PSMLP" });
+bars($("#oachart"), { labels: YEARS, base: OA_P1, prop: OA_HMM, names: ["P1 cascade", "Proposed HMM"], ariaLabel: "Overall accuracy per year, P1 cascade versus proposed HMM", select: true });
+
+/* year selector -> confusion matrices */
+function pickYear(i) {
+  const y = YEARS[i];
+  $$("#oachart .row").forEach((b, j) => b.setAttribute("aria-pressed", j === i));
+  const set = (img, kind, label) => { img.src = `assets/cm_${kind}_${y}.png`; img.alt = `Confusion matrix of the ${label} for ${y}`; };
+  set($("#cmP1"), "p1", "P1 cascade"); set($("#cmHmm"), "hmm", "proposed HMM");
+  $("#cmNote").textContent = `${y}: overall accuracy ${OA_P1[i].toFixed(2)} (P1 cascade) vs ${OA_HMM[i].toFixed(2)} (HMM).`;
+  if (motion) gsap.fromTo(".cms img", { opacity: 0.2 }, { opacity: 1, duration: 0.5 });
+}
+$$("#oachart .row").forEach((b, i) => b.addEventListener("click", () => pickYear(i)));
+pickYear(YEARS.length - 1);
+
+/* ---------- kernel demo ---------- */
+const phi = $("#phi");
+function drawK() {
+  const f = +phi.value, W = 320, H = 200, L = 38, B = 150, T = 12, R = 10, D = 1.5;
+  const X = d => L + (d / D) * (W - L - R), Y = k => B - k * (B - T);
+  let path = "";
+  for (let d = 0; d <= D + 1e-9; d += 0.02) path += (path ? "L" : "M") + X(d).toFixed(1) + " " + Y(Math.exp(-f * d * d)).toFixed(1);
+  $("#phiOut").textContent = f.toFixed(1);
+  $("#kplot").innerHTML = `<g stroke="#9aa1aa" stroke-width="1"><path d="M${L} ${T}V${B}H${W - R}" fill="none"/></g>
+    <path d="${path}" fill="none" stroke="#002677" stroke-width="3"/>
+    <g font-size="13" fill="#5A6068"><text x="${L - 6}" y="${Y(1) + 4}" text-anchor="end">1</text><text x="${L - 6}" y="${B + 4}" text-anchor="end">0</text>
+    <text x="${L}" y="${B + 18}" fill="#002677" font-weight="700">uniform</text><text x="${W - R}" y="${B + 18}" text-anchor="end" fill="#C8102E" font-weight="700">edge</text>
+    <text x="${(L + W - R) / 2}" y="${B + 36}" text-anchor="middle">d = ‖Ps − Pr‖</text>
+    <text x="12" y="${(B + T) / 2}" transform="rotate(-90 12 ${(B + T) / 2})" text-anchor="middle">K</text></g>`;
+}
+phi.addEventListener("input", drawK); drawK();
+
+/* ---------- before/after map slider ---------- */
+const cmp = $("#cmp"), cmpIn = $("input", cmp);
+const setP = v => cmp.style.setProperty("--p", v + "%");
+cmpIn.addEventListener("input", () => setP(cmpIn.value));
+if (motion) ScrollTrigger.create({ trigger: cmp, start: "top 75%", once: true, onEnter: () => {
+  const o = { v: 100 }; setP(100);
+  gsap.to(o, { v: 50, duration: 1.8, ease: "power3.inOut", onUpdate: () => { setP(o.v); cmpIn.value = o.v; } }); } });
+$("#legend").innerHTML = LEGEND.map(([n, c]) => `<li><i style="background:rgb(${c})"></i>${n}</li>`).join("");
+
+/* ---------- hero: classifier noise -> regularized map (illustrative) ---------- */
+const cv = $("#field"), ctx = cv.getContext("2d"), PAL = ["#00a000", "#aa7300", "#ffb432", "#ffff64", "#00dc82", "#fff5d7", "#0046c8"];
+const CELL = 22, st = { p: motion ? 0.4 : 0 };
+let cols, rows, base, r1, r2;
+function build() {
+  const b = cv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
+  cv.width = b.width * dpr; cv.height = b.height * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cols = Math.ceil(b.width / CELL); rows = Math.ceil(b.height / CELL);
+  const n = cols * rows; base = new Uint8Array(n); r1 = new Float32Array(n); r2 = new Float32Array(n);
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+    const i = y * cols + x, v = Math.sin(x * .11 + 1) + Math.sin(y * .16) + Math.sin((x + y) * .07) + Math.sin(Math.hypot(x - cols * .7, y - rows * .4) * .2);
+    const river = Math.abs(x - (cols * .22 + Math.sin(y * .22) * 3)) < 1.2;
+    base[i] = river ? 6 : Math.min(5, Math.max(0, Math.floor(((v + 4) / 8) * 6)));
+    r1[i] = Math.random(); r2[i] = Math.random();
+  }
+  draw();
+}
+function draw() {
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+    const i = y * cols + x;
+    ctx.fillStyle = PAL[r1[i] < st.p ? Math.floor(r2[i] * PAL.length) : base[i]];
+    ctx.fillRect(x * CELL, y * CELL, CELL - 1, CELL - 1);
+  }
+  $("#hintState").textContent = st.p > 0.12 ? "Noisy per-pixel classification" : "Regularized map";
+}
+build(); addEventListener("resize", () => { clearTimeout(build.t); build.t = setTimeout(build, 200); });
+if (motion) {
+  const tl = gsap.timeline({ repeat: -1, yoyo: true, repeatDelay: 1.1 }).to(st, { p: 0, duration: 3.4, ease: "power2.inOut", onUpdate: draw });
+  ScrollTrigger.create({ trigger: ".hero", start: "top top", end: "bottom top", onToggle: s => tl.paused(!s.isActive) });
+}
+
+/* ---------- scroll choreography ---------- */
+if (motion) {
+  gsap.to("#progress", { scaleX: 1, ease: "none", scrollTrigger: { start: 0, end: "max", scrub: true } });
+  const words = $("#title").textContent.trim().split(/\s+/);
+  $("#title").setAttribute("aria-label", words.join(" "));
+  $("#title").innerHTML = words.map(w => `<span class="w" aria-hidden="true"><span>${w}</span></span>`).join(" ");
+  gsap.from("#title .w span", { yPercent: 110, duration: 0.9, ease: "power4.out", stagger: 0.045, delay: 0.1 });
+  gsap.from([".event", ".authors", ".affil", ".kpi"], { y: 24, opacity: 0, duration: 0.8, stagger: 0.08, delay: 0.6, ease: "power2.out" });
+  $$("[data-count]").forEach(el => {
+    const to = +el.dataset.count, dec = +(el.dataset.dec || 0), o = { v: 0 };
+    el.textContent = (0).toFixed(dec);
+    gsap.to(o, { v: to, duration: 2, delay: 0.9, ease: "power2.out", onUpdate: () => (el.textContent = o.v.toFixed(dec)) });
+  });
+  $$("[data-reveal]").forEach(el => gsap.from(el, { y: 32, opacity: 0, duration: 0.8, ease: "power2.out", scrollTrigger: { trigger: el, start: "top 88%", once: true } }));
+  gsap.to(".scan", { y: 217, duration: 1.6, ease: "sine.inOut", repeat: -1, yoyo: true });
+} else gsap.set(".scan", { display: "none" });
+$$(".stage").forEach(s => ScrollTrigger.create({ trigger: s, start: "top 60%", end: "bottom 60%",
+  onToggle: t => $$(`.node[data-stage="${s.dataset.stage}"]`).forEach(n => n.classList.toggle("on", t.isActive)) }));
+
+/* ---------- QR code of this page's own address ---------- */
+// the QR always points at the chooser (site root), the address printed on the poster
+const url = /^https?:$/.test(location.protocol) ? new URL("./", location.href).href : null;
+if (url) {
+  new QRCodeStyling({ width: 220, height: 220, type: "svg", data: url, margin: 0, qrOptions: { errorCorrectionLevel: "H" },
+    dotsOptions: { color: "#002677", type: "rounded" }, cornersSquareOptions: { color: "#002677", type: "extra-rounded" },
+    cornersDotOptions: { color: "#C8102E" }, backgroundOptions: { color: "#ffffff" } }).append($("#qr"));
+  $("#urlText").textContent = url;
+  $("#copy").onclick = async e => { try { await navigator.clipboard.writeText(url); e.target.textContent = "Copied"; } catch { e.target.textContent = "Select the link above"; } };
+  if (navigator.share) { const s = $("#share-btn"); s.hidden = false; s.onclick = () => navigator.share({ title: document.title, url }).catch(() => {}); }
+} else {
+  $("#qr").innerHTML = '<p style="width:220px;color:#25282A;margin:0">Open this page from its web address (http/https) to show a working QR code.</p>';
+  $("#urlText").textContent = location.href; $("#copy").hidden = true; gsap.set(".scan", { display: "none" });
+}
+</script>
+</body>
+</html>
